@@ -12,10 +12,17 @@ class LogEvent{
     public:
         typedef std::shared_ptr<LogEvent> ptr;
         LogEvent();
+
+        const char* getFile() const {return m_file;}
+        int32_t getLine() const {return m_line;}
+        uint32_t getElapse() const {return m_elapse;}
+        uint32_t getThreadId() const {return m_threadId;}
+        uint32_t getFiberId() const {return m_fiberId;}
+        const std::string& getContent () const {return m_content;}
     private:
         const char* m_file=nullptr;//文件名
         int32_t m_line;//行号
-        uint32_t m_elapsed;//耗时
+        uint32_t m_elapse;//耗时
         uint32_t m_threadId;//线程id
         uint32_t m_fiberId;//协程id
         uint64_t m_time;//时间戳
@@ -25,12 +32,15 @@ class LogEvent{
 class LogLevel{
     public:
         enum Level{
+            UNKNOW=0, 
             DEBUG = 1,
             INFO = 2,
             WARN = 3,
             ERROR = 4,
             FATAL = 5,
         };
+
+        static const char* ToString(Level level);
 };
 //日志格式器
 class LogFormatter{
@@ -38,16 +48,17 @@ class LogFormatter{
         typedef std::shared_ptr<LogFormatter> ptr;
         LogFormatter(const std::string& pattern);
         
-        std::string format(const LogEvent::ptr& ev);
-    private:
+        std::string format(LogLevel::Level level, const LogEvent::ptr& ev);
+    public:
         class FormatItem{
             public:
                 typedef std::shared_ptr<FormatItem> ptr;
                 virtual ~FormatItem(){}
-                virtual void format(std::ostream os, const LogEvent::ptr& ev) = 0; 
+                virtual void format(std::ostream os,LogLevel::Level level, const LogEvent::ptr& ev) = 0; 
         };
         void init();  
     private:
+        bool m_error=false;
         std::string m_pattern;
         std::list<FormatItem::ptr> m_items;
 };
